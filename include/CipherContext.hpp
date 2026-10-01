@@ -26,7 +26,6 @@ class CipherContext final
     std::vector<std::byte> iv_;
 
 public:
-    template<typename... Args>
     explicit CipherContext(
         std::span<const std::byte> key,
         Mode mode,

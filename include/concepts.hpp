@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <ranges>
 #include <span>
 #include <cstddef>
 #include <cstdint>
@@ -8,58 +9,46 @@
 namespace concepts {
 
 template<typename T>
-concept KeyExpander = requires (
+concept KeyScheduler = requires (
     const T& expander,
-    std::span<const std::byte, T::MasterKeySize> key) 
+    std::span<const std::byte> key) 
 {
-    typename T::RoundKey;
-    typename T::KeyArray;
-    
-    requires std::same_as<decltype(T::MasterKeySize), const size_t>;
-
-    { expander.expand(key) } -> std::same_as<typename T::KeyArray>;
+    { expander.expand(key) } -> std::ranges::input_range;
 };
 
 template <typename T>
-concept EncryptMethod = requires (
+concept RoundFunction = requires (
     const T& method,
-    std::span<const std::byte, T::HalfBlockSize> block,
-    std::span<const std::byte, T::RoundKeySize> round_key,
-    std::span<std::byte, T::HalfBlockSize> out_block)
+    std::span<const std::byte> half_block,
+    std::span<std::byte> out_half_block,
+    std::span<const std::byte> round_key)
 {
-    requires std::same_as<decltype(T::BlockSize), const size_t>;
-    requires std::same_as<decltype(T::RoundKeySize), const size_t>;
-    requires std::same_as<decltype(T::HalfBlockSize), const size_t>;
-
-    { method.encrypt(block, round_key, out_block) };
+    { method.encrypt(half_block, out_half_block, round_key) } -> std::same_as<void>;
 };
 
 
 template <typename T>
 concept SymmetricCipher = requires (
     T& cipher, 
-    std::span<const std::byte, T::BlockSize> block,
-    std::span<const std::byte, T::MasterKeySize> key,
-    std::span<std::byte, T::BlockSize> out_block)
+    std::span<const std::byte> block,
+    std::span<const std::byte> key,
+    std::span<std::byte> out_block)
 {
-    requires std::same_as<decltype(T::MasterKeySize), const size_t>;
-    requires std::same_as<decltype(T::BlockSize), const size_t>;
+    { T::BlockSize } -> std::convertible_to<size_t>;
     
-    { cipher.set_key(key) };
-    { cipher.encrypt(block, out_block) };
-    { cipher.decrypt(block, out_block) };
+    { cipher.set_key(key) } -> std::same_as<void>;
+    { cipher.encrypt(block, out_block) } -> std::same_as<void>;
+    { cipher.decrypt(block, out_block) } -> std::same_as<void>;
 };
 
 template<typename T>
 concept CipherMode = requires (
     T& mode,
-    std::span<const std::byte> key,
     std::span<const std::byte> src,
     std::span<std::byte> dst,
+    std::span<const std::byte> key,
     std::span<const std::byte> iv)
 {
-    requires std::same_as<decltype(T::BlockSize), const size_t>;
-
     { mode.set_key(key) };
     { mode.encrypt_blocks(src, dst, iv) };
     { mode.decrypt_blocks(src, dst, iv) };

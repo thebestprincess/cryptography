@@ -7,6 +7,8 @@
 namespace constants
 {
     inline constexpr size_t BUFFER_SIZE { 64uz * 1024uz };
+    inline constexpr size_t DES_BLOCK_SIZE { 8uz };
+    inline constexpr size_t DES_MASTER_KEY_SIZE { 8uz };
 } // namespace constants
 
 namespace tables 
@@ -31,8 +33,7 @@ namespace tables
         2, 8, 24, 14,
         32, 27, 3, 9,
         19, 13, 30, 6,
-        22, 11, 4, 25
-    };
+        22, 11, 4, 25 };
     inline constexpr std::array<uint8_t, 56> PC_1
     {
         57, 49, 41, 33, 25, 17, 9,

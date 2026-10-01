@@ -22,16 +22,13 @@ namespace shared::mode
 template<concepts::SymmetricCipher Cipher>
 class ECB final
 {
-    Cipher cipher_;
+    Cipher cipher_{};
 
 public:
     static constexpr size_t BlockSize { Cipher::BlockSize };
 
     void set_key(std::span<const std::byte> key)
     {
-        if (key.size() != Cipher::MasterKeySize)
-            throw std::invalid_argument("Invalid key size");
-
         cipher_.set_key(key);
     }
 
@@ -95,7 +92,7 @@ public:
 template<concepts::SymmetricCipher Cipher>
 class CBC final
 {
-    Cipher cipher_;
+    Cipher cipher_{};
 
 public:
     static constexpr size_t BlockSize { Cipher::BlockSize };
@@ -166,7 +163,7 @@ public:
 template<concepts::SymmetricCipher Cipher>
 class PCBC final
 {
-    Cipher cipher_;
+    Cipher cipher_{};
 
 public:
     static constexpr size_t BlockSize { Cipher::BlockSize };
@@ -240,7 +237,7 @@ public:
 template<concepts::SymmetricCipher Cipher>
 class CFB final
 {
-    Cipher cipher_;
+    Cipher cipher_{};
 
 public:
     static constexpr size_t BlockSize { Cipher::BlockSize };
@@ -307,7 +304,7 @@ public:
 template<concepts::SymmetricCipher Cipher>
 class OFB final
 {
-    Cipher cipher_;
+    Cipher cipher_{};
 
 public:
     static constexpr size_t BlockSize { Cipher::BlockSize };
@@ -351,7 +348,7 @@ public:
 template<concepts::SymmetricCipher Cipher>
 class CTR final
 {
-    Cipher cipher_;
+    Cipher cipher_{};
     const size_t delta_;
 
 public:

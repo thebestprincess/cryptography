@@ -1,12 +1,9 @@
-#include "KeyExpander.hpp"
+#include "DES.hpp"
 
-#include <cstddef>
-#include <cstdint>
-
-namespace shared::detail
+namespace shared 
 {
 
-void des_key_shift(std::span<std::byte, 7> cidi, size_t round) noexcept
+void DesKeyScheduler::des_key_shift(std::span<std::byte, PermutedKeySize> cidi, size_t round) const noexcept
 {
     const unsigned shift { (round == 1 || round == 2 || round == 9 || round == 16) ? 1u : 2u };
 
