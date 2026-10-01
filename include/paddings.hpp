@@ -1,11 +1,10 @@
 #pragma once
 
-#include "concepts.hpp"
-
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <random>
 #include <span>
 #include <string_view>
 #include <utility>
@@ -18,29 +17,11 @@ enum class PaddingError : uint8_t { InvalidPadding };
 
 std::string_view get_padding_name(CipherPadding padding_type);
 
-class FastRnd final
-{
-    uint64_t seed_ { 0x853c32e53d0f490eULL };
-
-public:
-    constexpr FastRnd() noexcept = default;
-    explicit constexpr FastRnd(uint64_t seed): seed_(seed != 0 ? seed : 0x853c32e53d0f490eULL) {}
-
-    [[nodiscard]] constexpr uint8_t next_byte() noexcept
-    {
-        seed_ ^= seed_ << 13;
-        seed_ ^= seed_ >> 7;
-        seed_ ^= seed_ << 17;
-        return static_cast<uint8_t>(seed_);
-    }
-};
-
-template<size_t BlockSize = 8uz, concepts::ByteGenerator Generator = FastRnd>
+template<size_t BlockSize = 8uz>
 constexpr void add_padding(
     std::span<const std::byte> input,
     std::span<std::byte> output,
-    CipherPadding padding_type,
-    Generator&& rnd = FastRnd{}) noexcept
+    CipherPadding padding_type) noexcept
 {
     const size_t pad_len { BlockSize - input.size() % BlockSize };
     if (!pad_len) return;
@@ -65,9 +46,11 @@ constexpr void add_padding(
             std::ranges::fill(pad_range, static_cast<std::byte>(pad_len));
             break;
         case CipherPadding::ISO_10126:
+            std::mt19937_64 engine{std::random_device{}()};
+            std::uniform_int_distribution<unsigned short> dist(0, 255);
             for (size_t i { 0 }; i < pad_len - 1; ++i)
             {
-                pad_range[i] = static_cast<std::byte>(rnd.next_byte());
+                pad_range[i] = static_cast<std::byte>(dist(engine));
             }
             output.back() = static_cast<std::byte>(pad_len);
             break;
@@ -85,6 +68,8 @@ constexpr std::expected<std::span<const std::byte>, PaddingError> remove_padding
     {
         case CipherPadding::Zeros:
         {
+            if (block[BlockSize - 1] != static_cast<std::byte>(0x00))
+                return std::unexpected(PaddingError::InvalidPadding);
             size_t i { BlockSize };
             while (i > 0 && block[i - 1] == static_cast<std::byte>(0x00)) --i;
 

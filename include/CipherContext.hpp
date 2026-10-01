@@ -21,17 +21,16 @@ enum class CryptoOp: uint8_t { Encrypt, Decrypt };
 template<concepts::CipherMode Mode>
 class CipherContext final
 {
-    Mode mode_;
+    Mode mode_{};
     shared::padding::CipherPadding padding_type_;
     std::vector<std::byte> iv_;
 
 public:
     explicit CipherContext(
         std::span<const std::byte> key,
-        Mode mode,
         shared::padding::CipherPadding padding_type,
         std::span<const std::byte> iv = {})
-        : mode_(std::move(mode)), padding_type_(padding_type)
+        : padding_type_(padding_type)
     {
         mode_.set_key(key);
         if (!iv.empty()) iv_.assign_range(iv);

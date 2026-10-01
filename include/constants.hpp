@@ -7,8 +7,13 @@
 namespace constants
 {
     inline constexpr size_t BUFFER_SIZE { 64uz * 1024uz };
+
     inline constexpr size_t DES_BLOCK_SIZE { 8uz };
     inline constexpr size_t DES_MASTER_KEY_SIZE { 8uz };
+
+    inline constexpr size_t DEAL_BLOCK_SIZE { 16uz };
+    inline constexpr size_t DEAL_MASTER_KEY_SIZE { 16uz };
+    inline constexpr size_t DEAL_ROUNDS_COUNT { 6uz };
 } // namespace constants
 
 namespace tables 

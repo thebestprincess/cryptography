@@ -4,7 +4,6 @@
 #include <ranges>
 #include <span>
 #include <cstddef>
-#include <cstdint>
 
 namespace concepts {
 
@@ -49,15 +48,12 @@ concept CipherMode = requires (
     std::span<const std::byte> key,
     std::span<const std::byte> iv)
 {
+    { T::BlockSize } -> std::convertible_to<size_t>;
+
+    { T::string() } -> std::convertible_to<std::string_view>;
     { mode.set_key(key) };
     { mode.encrypt_blocks(src, dst, iv) };
     { mode.decrypt_blocks(src, dst, iv) };
-};
-    
-template <typename T>
-concept ByteGenerator = requires (T& g)
-{
-    { g.next_byte() } -> std::same_as<uint8_t>;
 };
 
 } // namespace concepts

@@ -1,10 +1,9 @@
 #include "CipherContext.hpp"
 #include "DES.hpp"
-#include "FeistelFunction.hpp"
-#include "KeyExpander.hpp"
 #include "cipher_modes.hpp"
 #include "constants.hpp"
 #include "paddings.hpp"
+#include "DEAL.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -17,7 +16,7 @@
 #include <random>
 #include <ranges>
 #include <span>
-#include <typeinfo>
+#include <string_view>
 #include <vector>
 
 
@@ -84,7 +83,6 @@ void print_vec(std::ranges::sized_range auto& vec, std::string_view vec_name)
 
 namespace tests 
 {
-using DesCipher = shared::DES<shared::DesKeyExpander, shared::DesEncryptMethod>;
 
 template<typename Mode>
 void test_in_memory(
@@ -96,7 +94,7 @@ void test_in_memory(
     std::vector<std::byte> ciphertext(16);
     std::vector<std::byte> decrypted(16);
 
-    shared::CipherContext<Mode> context(key, Mode{}, padding, iv);
+    shared::CipherContext<Mode> context(key, padding, iv);
 
     size_t enc_size { context.async_encrypt(plaintext, ciphertext).get() };
     ciphertext.resize(enc_size);
@@ -104,7 +102,7 @@ void test_in_memory(
     size_t dec_size { context.async_decrypt(ciphertext, decrypted).get() };
     decrypted.resize(dec_size);
 
-    std::println("Mode: {}", typeid(Mode).name());
+    std::println("Mode: {}", Mode::string());
 
     if (std::ranges::equal(plaintext, decrypted))
     {
@@ -125,15 +123,16 @@ template<typename Mode>
 void test_file_io(const std::filesystem::path& input_path,
                   std::span<const std::byte> key, 
                   std::span<const std::byte> iv, 
-                  shared::padding::CipherPadding padding)
+                  shared::padding::CipherPadding padding,
+                  std::string_view cipher)
 {
     auto encrypted_path { input_path };
-    encrypted_path.replace_extension(".enc");
+    encrypted_path.replace_extension(std::format(".enc", cipher));
 
     auto decrypted_path { input_path };
-    decrypted_path.replace_extension(".dec");
+    decrypted_path.replace_extension(std::format(".dec", cipher));
 
-    shared::CipherContext<Mode> context(key, Mode{}, padding, iv);
+    shared::CipherContext<Mode> context(key, padding, iv);
 
     context.process_file_async(input_path, encrypted_path, shared::CryptoOp::Encrypt).get();
     context.process_file_async(encrypted_path, decrypted_path, shared::CryptoOp::Decrypt).get();
@@ -142,6 +141,15 @@ void test_file_io(const std::filesystem::path& input_path,
         std::println("File test {}: SUCCESS", input_path.string());
     else
         std::println(stderr, "File test {}: FAILED", input_path.string());
+    
+    if (std::filesystem::exists(encrypted_path))
+    {
+        std::filesystem::remove(encrypted_path);
+    }
+    if (std::filesystem::exists(decrypted_path))
+    {
+        std::filesystem::remove(decrypted_path);
+    }
 }
 
 } // namespace tests
@@ -149,51 +157,93 @@ void test_file_io(const std::filesystem::path& input_path,
 
 int main()
 {
+    using namespace shared;
     try 
     {
         const auto master_key { test_utils::generate_random_bytes(8) };
         const auto iv { test_utils::generate_random_bytes(8) };
 
         std::println("In-memory tests:");
-        tests::test_in_memory<shared::mode::ECB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::Zeros);
-        tests::test_in_memory<shared::mode::ECB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ANSI_X923);
-        tests::test_in_memory<shared::mode::ECB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ISO_10126);
-        tests::test_in_memory<shared::mode::ECB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::PKCS7);
+        tests::test_in_memory<mode::ECB<Des>>(master_key, iv, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::ECB<Des>>(master_key, iv, padding::CipherPadding::ANSI_X923);
 
-        tests::test_in_memory<shared::mode::CBC<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::Zeros);
-        tests::test_in_memory<shared::mode::CBC<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ANSI_X923);
-        tests::test_in_memory<shared::mode::CBC<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ISO_10126);
-        tests::test_in_memory<shared::mode::CBC<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::PKCS7);
+        tests::test_in_memory<mode::ECB<Des>>(master_key, iv, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::ECB<Des>>(master_key, iv, padding::CipherPadding::PKCS7);
 
-        tests::test_in_memory<shared::mode::PCBC<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::Zeros);
-        tests::test_in_memory<shared::mode::PCBC<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ANSI_X923);
-        tests::test_in_memory<shared::mode::PCBC<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ISO_10126);
-        tests::test_in_memory<shared::mode::PCBC<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::PKCS7);
+        tests::test_in_memory<mode::CBC<Des>>(master_key, iv, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::CBC<Des>>(master_key, iv, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::CBC<Des>>(master_key, iv, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::CBC<Des>>(master_key, iv, padding::CipherPadding::PKCS7);
 
-        tests::test_in_memory<shared::mode::OFB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::Zeros);
-        tests::test_in_memory<shared::mode::OFB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ANSI_X923);
-        tests::test_in_memory<shared::mode::OFB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ISO_10126);
-        tests::test_in_memory<shared::mode::OFB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::PKCS7);
+        tests::test_in_memory<mode::PCBC<Des>>(master_key, iv, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::PCBC<Des>>(master_key, iv, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::PCBC<Des>>(master_key, iv, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::PCBC<Des>>(master_key, iv, padding::CipherPadding::PKCS7);
 
-        tests::test_in_memory<shared::mode::CFB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::Zeros);
-        tests::test_in_memory<shared::mode::CFB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ANSI_X923);
-        tests::test_in_memory<shared::mode::CFB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ISO_10126);
-        tests::test_in_memory<shared::mode::CFB<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::PKCS7);
+        tests::test_in_memory<mode::OFB<Des>>(master_key, iv, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::OFB<Des>>(master_key, iv, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::OFB<Des>>(master_key, iv, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::OFB<Des>>(master_key, iv, padding::CipherPadding::PKCS7);
 
-        tests::test_in_memory<shared::mode::CTR<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::Zeros);
-        tests::test_in_memory<shared::mode::CTR<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ANSI_X923);
-        tests::test_in_memory<shared::mode::CTR<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ISO_10126);
-        tests::test_in_memory<shared::mode::CTR<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::PKCS7);
-
-        tests::test_in_memory<shared::mode::RandomDelta<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::Zeros);
-        tests::test_in_memory<shared::mode::RandomDelta<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ANSI_X923);
-        tests::test_in_memory<shared::mode::RandomDelta<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::ISO_10126);
-        tests::test_in_memory<shared::mode::RandomDelta<tests::DesCipher>>(master_key, iv, shared::padding::CipherPadding::PKCS7);
-
+        tests::test_in_memory<mode::CFB<Des>>(master_key, iv, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::CFB<Des>>(master_key, iv, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::CFB<Des>>(master_key, iv, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::CFB<Des>>(master_key, iv, padding::CipherPadding::PKCS7);
         
-        std::vector<std::filesystem::path> test_files = {
+        tests::test_in_memory<mode::CTR<Des>>(master_key, iv, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::CTR<Des>>(master_key, iv, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::CTR<Des>>(master_key, iv, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::CTR<Des>>(master_key, iv, padding::CipherPadding::PKCS7);
+        
+        tests::test_in_memory<mode::RandomDelta<Des, 7>>(master_key, iv, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::RandomDelta<Des, 7>>(master_key, iv, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::RandomDelta<Des, 7>>(master_key, iv, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::RandomDelta<Des, 7>>(master_key, iv, padding::CipherPadding::PKCS7);
+
+
+        const auto master_key_deal { test_utils::generate_random_bytes(16) };
+        const auto iv_deal { test_utils::generate_random_bytes(16) };
+        
+        tests::test_in_memory<mode::ECB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::ECB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ANSI_X923);
+
+        tests::test_in_memory<mode::ECB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::ECB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
+
+        tests::test_in_memory<mode::CBC<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::CBC<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::CBC<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::CBC<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
+
+        tests::test_in_memory<mode::PCBC<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::PCBC<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::PCBC<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::PCBC<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
+
+        tests::test_in_memory<mode::OFB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::OFB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::OFB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::OFB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
+
+        tests::test_in_memory<mode::CFB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::CFB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::CFB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::CFB<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
+
+        tests::test_in_memory<mode::CTR<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::CTR<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::CTR<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::CTR<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
+
+        tests::test_in_memory<mode::RandomDelta<Deal, 7>>(master_key_deal, iv_deal, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::RandomDelta<Deal, 7>>(master_key_deal, iv_deal, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::RandomDelta<Deal, 7>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::RandomDelta<Deal, 7>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
+
+
+        std::vector<std::filesystem::path> test_files {
             "./test_data/tests.txt",
-            "./test_data/animegirl.jpg",
+            "../test_data/animegirl.jpg",
             "./test_data/amogus.mp3",
             "./test_data/screencast.mp4"
         };
@@ -202,15 +252,15 @@ int main()
         {
             if (!std::filesystem::exists(file))
             {
-                std::cerr << "File doesn't exist. Skip..." << file << '\n';
+                std::println(stderr, "File {} doesn't exist. Skip...", file.string());
                 continue;
             }
 
-            tests::test_file_io<shared::mode::CBC<tests::DesCipher>>(
-                file, master_key, iv, shared::padding::CipherPadding::PKCS7);
+            tests::test_file_io<mode::CTR<Des>>(
+                file, master_key, iv, padding::CipherPadding::PKCS7, "des");
+            tests::test_file_io<mode::CTR<Deal>>(
+                file, master_key_deal, iv_deal, padding::CipherPadding::PKCS7, "deal");
         }
-
-        std::cout << "\nAll test passed\n";
     }
     catch (const std::exception& e) 
     {

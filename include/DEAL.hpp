@@ -3,6 +3,7 @@
 #include "concepts.hpp"
 #include "DES.hpp"
 #include "FeistelNetwork.hpp"
+#include "constants.hpp"
 
 #include <cstddef>
 #include <span>
@@ -14,8 +15,8 @@ namespace shared
 class DealRoundFunction final
 {
 public:
-    static constexpr size_t BlockSize { 16uz };
-    static constexpr size_t RoundsCount { 6uz };
+    static constexpr size_t BlockSize { constants::DEAL_BLOCK_SIZE };
+    static constexpr size_t RoundsCount { constants::DEAL_ROUNDS_COUNT };
 
     constexpr void encrypt(
         std::span<const std::byte> half_block,
@@ -31,9 +32,9 @@ static_assert(concepts::RoundFunction<DealRoundFunction>);
 
 class DealKeyScheduler final
 {
-    static constexpr size_t MasterKeySize { 16uz };
-    static constexpr size_t RoundKeySize { 8uz };
-    static constexpr size_t RoundsCount { 6uz };
+    static constexpr size_t MasterKeySize { constants::DEAL_MASTER_KEY_SIZE };
+    static constexpr size_t RoundKeySize { MasterKeySize / 2 };
+    static constexpr size_t RoundsCount { constants::DEAL_ROUNDS_COUNT };
 
     using KeyTuple = std::tuple<std::array<std::byte, RoundKeySize>, std::array<std::byte, RoundKeySize>>;
     

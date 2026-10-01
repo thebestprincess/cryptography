@@ -9,8 +9,8 @@ namespace shared::detail
 template<bool Msb>
 constexpr void set_bit(std::span<std::byte> data, size_t bit_index) noexcept
 {
-    const size_t byte_idx { bit_index >> 3 };
-    const unsigned bit_idx { static_cast<unsigned>(bit_index & 7) };
+    const size_t byte_idx { bit_index >> 3uz };
+    const unsigned bit_idx { static_cast<unsigned>(bit_index & 0x07) };
     const unsigned shift { Msb ? (7u - bit_idx) : bit_idx };
     
     data[byte_idx] |= static_cast<std::byte>(1u << shift);

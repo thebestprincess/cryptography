@@ -7,6 +7,7 @@
 #include <execution>
 #include <ranges>
 #include <span>
+#include <string_view>
 #include <array>
 
 namespace shared
@@ -87,6 +88,8 @@ public:
                 cipher_.decrypt(src_span,  dst_span);
             });
     }
+
+    static constexpr std::string_view string() { return "ECB"; }; 
 };
 
 template<concepts::SymmetricCipher Cipher>
@@ -158,6 +161,8 @@ public:
             std::ranges::transform(curr_dst, prev_cipher_text, curr_dst.begin(), std::bit_xor<>{});
         });
     }
+
+    static constexpr std::string_view string() { return "CBC"; }; 
 };
 
 template<concepts::SymmetricCipher Cipher>
@@ -232,6 +237,8 @@ public:
             std::ranges::transform(dst_span, src_span, prev_xor_span.begin(), std::bit_xor<>());
         }    
     }
+
+    static constexpr std::string_view string() { return "PCBC"; }; 
 };
 
 template<concepts::SymmetricCipher Cipher>
@@ -299,6 +306,8 @@ public:
                 std::ranges::transform(curr_src, curr_cipher_key, curr_dst.begin(), std::bit_xor<>());
             });
     }
+
+    static constexpr std::string_view string() { return "CFB"; }; 
 };
 
 template<concepts::SymmetricCipher Cipher>
@@ -343,13 +352,15 @@ public:
     {
         encrypt_blocks(src, dst, iv);
     }
+
+    static constexpr std::string_view string() { return "OFB"; }; 
 };
 
-template<concepts::SymmetricCipher Cipher>
+template<concepts::SymmetricCipher Cipher, size_t Delta = 1>
 class CTR final
 {
     Cipher cipher_{};
-    const size_t delta_;
+    const size_t delta_ { Delta };
 
 public:
     explicit CTR(size_t delta = 1uz) : delta_(delta) {}    
@@ -401,6 +412,11 @@ public:
         encrypt_blocks(src, dst, iv);
     }
 
+    static constexpr std::string_view string()
+    {
+        return (Delta == 1) ? "CTR" : "RandomDelta";
+    }; 
+
 private:
     [[nodiscard]] std::array<std::byte, BlockSize> make_counter(
         std::span<const std::byte> iv, 
@@ -422,7 +438,7 @@ private:
     }
 };
 
-template<concepts::SymmetricCipher Cipher>
-using RandomDelta = CTR<Cipher>;
+template<concepts::SymmetricCipher Cipher, size_t Delta>
+using RandomDelta = CTR<Cipher, Delta>;
 
 } // namespace::mode
