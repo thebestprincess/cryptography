@@ -28,8 +28,8 @@ private:
 public:
     constexpr void encrypt(std::span<const std::byte> half_block,
         std::span<std::byte> out_half_block,
-        std::span<const std::byte> round_key) const
-    {
+        std::span<const std::byte> round_key
+    ) const {
         if (half_block.size() != HalfBlockSize)
             throw std::invalid_argument("Invalid half block size.");
         if (out_half_block.size() != HalfBlockSize)
@@ -74,8 +74,6 @@ public:
 };
 static_assert(concepts::RoundFunction<DesRoundFunction>);
 
-
-
 class DesKeyScheduler final 
 {
     static constexpr size_t PermutedKeySize { 7uz };
@@ -87,7 +85,8 @@ public:
     using RoundKey = std::array<std::byte, RoundKeySize>;
     using KeyArray = std::array<RoundKey, RoundsCount>;
 
-    [[nodiscard]] constexpr KeyArray expand(std::span<const std::byte> master_key) const
+    [[nodiscard]]
+    constexpr KeyArray expand(std::span<const std::byte> master_key) const
     {
         if (master_key.size() != MasterKeySize)
             throw std::invalid_argument("DES requires 8-byte key");
@@ -128,9 +127,10 @@ public:
         fn_.set_key(key);
     }
 
-    constexpr void encrypt(std::span<const std::byte> block,
-                           std::span<std::byte> out_block) const
-    {
+    constexpr void encrypt(
+        std::span<const std::byte> block,
+        std::span<std::byte> out_block
+    ) const {
         if (block.size() != BlockSize || out_block.size() != BlockSize)
             throw std::invalid_argument("Invalid block size.");
 
@@ -142,9 +142,10 @@ public:
         permute_bits_to(encrypt_result, tables::IP_INV, out_block, BitOrder::MSB1);
     }
 
-    constexpr void decrypt(std::span<const std::byte> block,
-                           std::span<std::byte> out_block) const
-    {
+    constexpr void decrypt(
+        std::span<const std::byte> block,
+        std::span<std::byte> out_block
+    ) const {
         if (block.size() != BlockSize || out_block.size() != BlockSize)
             throw std::invalid_argument("Invalid block size.");
 

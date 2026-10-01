@@ -3,8 +3,10 @@
 namespace shared 
 {
 
-void DesKeyScheduler::des_key_shift(std::span<std::byte, PermutedKeySize> cidi, size_t round) const noexcept
-{
+void DesKeyScheduler::des_key_shift(
+    std::span<std::byte, PermutedKeySize> cidi,
+    size_t round
+) const noexcept {
     const unsigned shift { (round == 1 || round == 2 || round == 9 || round == 16) ? 1u : 2u };
 
     uint64_t raw { 0 };

@@ -7,8 +7,10 @@ namespace shared::detail
 {
 
 template<bool Msb>
-constexpr void set_bit(std::span<std::byte> data, size_t bit_index) noexcept
-{
+constexpr void set_bit(
+    std::span<std::byte> data,
+    size_t bit_index
+) noexcept {
     const size_t byte_idx { bit_index >> 3uz };
     const unsigned bit_idx { static_cast<unsigned>(bit_index & 0x07) };
     const unsigned shift { Msb ? (7u - bit_idx) : bit_idx };
@@ -17,8 +19,10 @@ constexpr void set_bit(std::span<std::byte> data, size_t bit_index) noexcept
 }
 
 template<bool Msb>
-constexpr bool bit_at(std::span<const std::byte> data, size_t bit_index) noexcept
-{
+constexpr bool bit_at(
+    std::span<const std::byte> data,
+    size_t bit_index
+) noexcept {
     const size_t byte_idx { bit_index >> 3 };
     const unsigned bit_idx { static_cast<unsigned>(bit_index & 7) };
     const unsigned shift { Msb ? (7u - bit_idx) : bit_idx };
@@ -28,10 +32,11 @@ constexpr bool bit_at(std::span<const std::byte> data, size_t bit_index) noexcep
 }
 
 template<bool Msb, bool OneIndexed>
-void permute_bits_impl(std::span<const std::byte> input,
-                       std::span<const uint8_t> p_box,
-                       std::span<std::byte> output) noexcept
-{
+void permute_bits_impl(
+    std::span<const std::byte> input,
+    std::span<const uint8_t> p_box,
+    std::span<std::byte> output
+) noexcept {
     std::ranges::fill(output, std::byte{0});
 
     const size_t p_box_size { p_box.size() };
@@ -48,11 +53,12 @@ void permute_bits_impl(std::span<const std::byte> input,
 
 } // namespace
 
-void shared::permute_bits_to(std::span<const std::byte> input,
-                     std::span<const uint8_t> p_box,
-                     std::span<std::byte> output,
-                     shared::BitOrder order) noexcept
-{
+void shared::permute_bits_to(
+    std::span<const std::byte> input,
+    std::span<const uint8_t> p_box,
+    std::span<std::byte> output,
+    shared::BitOrder order
+) noexcept {
     switch (order)
     {
     case shared::BitOrder::LSB0:

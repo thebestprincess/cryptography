@@ -23,7 +23,8 @@
 namespace test_utils 
 {
 
-[[nodiscard]] std::vector<std::byte> generate_random_bytes(size_t size)
+[[nodiscard]]
+std::vector<std::byte> generate_random_bytes(size_t size)
 {
     std::mt19937_64 engine{std::random_device{}()};
     std::uniform_int_distribution<unsigned short> dist(0, 255);
@@ -36,10 +37,11 @@ namespace test_utils
     return buffer;
 }
 
-[[nodiscard]] bool compare_files(
+[[nodiscard]]
+bool compare_files(
     const std::filesystem::path& file1, 
-    const std::filesystem::path& file2)
-{
+    const std::filesystem::path& file2
+) {
     std::ifstream f1(file1, std::ios::binary);
     std::ifstream f2(file2, std::ios::binary);
 
@@ -66,8 +68,10 @@ namespace test_utils
     return true;
 } 
 
-void print_vec(std::ranges::sized_range auto& vec, std::string_view vec_name)
-{
+void print_vec(
+    std::ranges::sized_range auto& vec,
+    std::string_view vec_name
+) {
     std::print("{}: [", vec_name);
 
     const size_t size { vec.size() };
@@ -88,8 +92,8 @@ template<typename Mode>
 void test_in_memory(
     std::span<const std::byte> key, 
     std::span<const std::byte> iv, 
-    shared::padding::CipherPadding padding)
-{
+    shared::padding::CipherPadding padding
+) {
     auto plaintext { test_utils::generate_random_bytes(9) };
     std::vector<std::byte> ciphertext(16);
     std::vector<std::byte> decrypted(16);
@@ -120,12 +124,13 @@ void test_in_memory(
 }
 
 template<typename Mode>
-void test_file_io(const std::filesystem::path& input_path,
-                  std::span<const std::byte> key, 
-                  std::span<const std::byte> iv, 
-                  shared::padding::CipherPadding padding,
-                  std::string_view cipher)
-{
+void test_file_io(
+    const std::filesystem::path& input_path,
+    std::span<const std::byte> key, 
+    std::span<const std::byte> iv, 
+    shared::padding::CipherPadding padding,
+    std::string_view cipher
+) {
     auto encrypted_path { input_path };
     encrypted_path.replace_extension(std::format(".enc", cipher));
 

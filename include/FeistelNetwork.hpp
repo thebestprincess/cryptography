@@ -27,8 +27,9 @@ public:
 
     constexpr explicit FeistelNetwork(
         KE expander = {},
-        RF method = {}) noexcept
-        : expander_{ std::move(expander) }, method_{ std::move(method) } {}
+        RF method = {}
+    ) noexcept
+    : expander_{ std::move(expander) }, method_{ std::move(method) } {}
 
     constexpr void set_key(std::span<const std::byte> key)
     {
@@ -37,15 +38,15 @@ public:
 
     constexpr void encrypt(
         std::span<const std::byte> block,
-        std::span<std::byte> out_block) const
-    {
+        std::span<std::byte> out_block
+    ) const {
         process_network(block, out_block, std::views::iota(0uz, RoundsCount));
     }
 
     constexpr void decrypt(
         std::span<const std::byte> block,
-        std::span<std::byte> out_block) const
-    {
+        std::span<std::byte> out_block
+    ) const {
         process_network(block, out_block, std::views::iota(0uz, RoundsCount) | std::views::reverse);
     }
 
@@ -54,10 +55,11 @@ private:
 
 private:
     template<typename RoundRange>
-    constexpr void process_network(std::span<const std::byte> block,
-                                   std::span<std::byte> out_block,
-                                   RoundRange&& round_range) const
-    {
+    constexpr void process_network(
+        std::span<const std::byte> block,
+        std::span<std::byte> out_block,
+        RoundRange&& round_range
+    ) const {
         std::array<std::byte, HalfBlockSize> left_block{};
         std::array<std::byte, HalfBlockSize> right_block{};
 

@@ -21,8 +21,8 @@ public:
     constexpr void encrypt(
         std::span<const std::byte> half_block,
         std::span<std::byte> out_half_block,
-        std::span<const std::byte> round_key) const
-    {
+        std::span<const std::byte> round_key
+    ) const {
         Des des{};
         des.set_key(round_key);
         des.encrypt(half_block, out_half_block);
@@ -42,7 +42,8 @@ public:
     using RoundKey = std::array<std::byte, RoundKeySize>;
     using KeyArray = std::array<RoundKey, RoundsCount>;
     
-    [[nodiscard]] KeyArray expand(std::span<const std::byte> master_key) const
+    [[nodiscard]]
+    KeyArray expand(std::span<const std::byte> master_key) const
     {
         if (master_key.size() != MasterKeySize)
             throw std::invalid_argument("DEAL-128 requires 16-byte key");

@@ -7,8 +7,8 @@ namespace shared
 {
 
 DealKeyScheduler::KeyTuple DealKeyScheduler::get_input_keys(
-    std::span<const std::byte> key) const noexcept
-{
+    std::span<const std::byte> key
+) const noexcept {
     std::array<std::byte, RoundKeySize> K1{};
     std::array<std::byte, RoundKeySize> K2{};
     
@@ -20,8 +20,8 @@ DealKeyScheduler::KeyTuple DealKeyScheduler::get_input_keys(
 
 DealKeyScheduler::KeyArray DealKeyScheduler::get_key_schedule(
     std::span<const std::byte> K1,
-    std::span<const std::byte> K2) const
-{
+    std::span<const std::byte> K2
+) const {
     static constexpr const std::array<std::byte, 8> fixed_key { 
         std::byte{0x01}, std::byte{0x23}, std::byte{0x45}, std::byte{0x67}, 
         std::byte{0x89}, std::byte{0xab}, std::byte{0xcd}, std::byte{0xef} 
@@ -53,5 +53,4 @@ DealKeyScheduler::KeyArray DealKeyScheduler::get_key_schedule(
     return round_keys;
 }
 
-
-}
+} // namespace shared

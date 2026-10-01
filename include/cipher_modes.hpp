@@ -36,8 +36,8 @@ public:
     void encrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst,
-        [[maybe_unused]] std::span<const std::byte> iv = {})
-    {
+        [[maybe_unused]] std::span<const std::byte> iv = {}
+    ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
             throw std::invalid_argument("Size must be a multiple of BlockSize and destination must be large enough");
         if (iv.size() != BlockSize)
@@ -56,14 +56,15 @@ public:
                 auto curr_dst { dst.subspan(i * BlockSize, BlockSize).first<BlockSize>() };
             
                 cipher_.encrypt(curr_src,  curr_dst);
-            });
+            }
+        );
     }
 
     void decrypt_blocks(
         std::span<const std::byte> src,
         std::span<std::byte> dst,
-        [[maybe_unused]] std::span<const std::byte> iv = {})
-    {
+        [[maybe_unused]] std::span<const std::byte> iv = {}
+    ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
             throw std::invalid_argument("Size must be a multiple of BlockSize and dst must be large enough");
         if (iv.size() != BlockSize)
@@ -86,7 +87,8 @@ public:
                 std::span<std::byte, BlockSize> dst_span { dst_chunk.data(), BlockSize };
 
                 cipher_.decrypt(src_span,  dst_span);
-            });
+            }
+        );
     }
 
     static constexpr std::string_view string() { return "ECB"; }; 
@@ -108,8 +110,8 @@ public:
     void encrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
             throw std::invalid_argument("Size must be a multiple of BlockSize and dst must be large enough");
         if (iv.size() != BlockSize)
@@ -135,8 +137,8 @@ public:
     void decrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
             throw std::invalid_argument("Size must be a multiple of BlockSize and dst must be large enough");
         if (iv.size() != BlockSize)
@@ -149,17 +151,18 @@ public:
             std::execution::par_unseq, 
             indices.begin(),
             indices.end(), 
-        [this, src, dst, iv](size_t i)
-        {
-            std::span<const std::byte, BlockSize> prev_cipher_text { (i == 0) ? iv : src.subspan((i - 1) * BlockSize, BlockSize).first<BlockSize>() };
+            [this, src, dst, iv](size_t i)
+            {
+                std::span<const std::byte, BlockSize> prev_cipher_text { (i == 0) ? iv : src.subspan((i - 1) * BlockSize, BlockSize).first<BlockSize>() };
 
-            auto curr_src { src.subspan(i * BlockSize, BlockSize).first<BlockSize>() };
-            auto curr_dst { dst.subspan(i * BlockSize, BlockSize).first<BlockSize>() };
-        
-            cipher_.decrypt(curr_src, curr_dst);
+                auto curr_src { src.subspan(i * BlockSize, BlockSize).first<BlockSize>() };
+                auto curr_dst { dst.subspan(i * BlockSize, BlockSize).first<BlockSize>() };
+            
+                cipher_.decrypt(curr_src, curr_dst);
 
-            std::ranges::transform(curr_dst, prev_cipher_text, curr_dst.begin(), std::bit_xor<>{});
-        });
+                std::ranges::transform(curr_dst, prev_cipher_text, curr_dst.begin(), std::bit_xor<>{});
+            }
+        );
     }
 
     static constexpr std::string_view string() { return "CBC"; }; 
@@ -181,8 +184,8 @@ public:
     void encrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
             throw std::invalid_argument("Size must be a multiple of BlockSize and dst must be large enough");
         if (iv.size() != BlockSize)
@@ -213,8 +216,8 @@ public:
     void decrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
             throw std::invalid_argument("Size must be a multiple of BlockSize and dst must be large enough");
         if (iv.size() != BlockSize)
@@ -257,8 +260,8 @@ public:
     void encrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         if (iv.size() != BlockSize)
             throw std::invalid_argument("Invalid IV size");
 
@@ -280,8 +283,8 @@ public:
     void decrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         if (iv.size() != BlockSize)
             throw std::invalid_argument("Invalid IV size");
 
@@ -304,7 +307,8 @@ public:
                 cipher_.encrypt(prev_ct, curr_cipher_key);
 
                 std::ranges::transform(curr_src, curr_cipher_key, curr_dst.begin(), std::bit_xor<>());
-            });
+            }
+        );
     }
 
     static constexpr std::string_view string() { return "CFB"; }; 
@@ -326,8 +330,8 @@ public:
     void encrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         if (iv.size() != BlockSize)
             throw std::invalid_argument("Invalid IV size");
 
@@ -348,8 +352,8 @@ public:
     void decrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         encrypt_blocks(src, dst, iv);
     }
 
@@ -375,8 +379,8 @@ public:
     void encrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         if (iv.size() != BlockSize)
             throw std::invalid_argument("Invalid IV size");
 
@@ -401,27 +405,29 @@ public:
                 auto curr_dst { dst.subspan(offset, current_block_size) };
                 
                 std::ranges::transform(curr_src, encrypted_counter, curr_dst.begin(), std::bit_xor<>());
-            });
+            }
+        );
     }
 
     void decrypt_blocks(
         std::span<const std::byte> src, 
         std::span<std::byte> dst, 
-        std::span<const std::byte> iv)
-    {
+        std::span<const std::byte> iv
+    ) {
         encrypt_blocks(src, dst, iv);
     }
 
     static constexpr std::string_view string()
     {
         return (Delta == 1) ? "CTR" : "RandomDelta";
-    }; 
+    }
 
 private:
-    [[nodiscard]] std::array<std::byte, BlockSize> make_counter(
+    [[nodiscard]]
+    std::array<std::byte, BlockSize> make_counter(
         std::span<const std::byte> iv, 
-        uint64_t block_index) 
-    {
+        uint64_t block_index
+    ) {
         std::array<std::byte, BlockSize> counter;
         std::ranges::copy(iv, counter.begin());
 

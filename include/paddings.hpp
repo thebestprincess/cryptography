@@ -21,8 +21,8 @@ template<size_t BlockSize = 8uz>
 constexpr void add_padding(
     std::span<const std::byte> input,
     std::span<std::byte> output,
-    CipherPadding padding_type) noexcept
-{
+    CipherPadding padding_type
+) noexcept {
     const size_t pad_len { BlockSize - input.size() % BlockSize };
     if (!pad_len) return;
 
@@ -36,16 +36,23 @@ constexpr void add_padding(
     switch (padding_type)
     {
         case CipherPadding::Zeros:
+        {
             std::ranges::fill(pad_range, static_cast<std::byte>(0x00));
             break;
+        }
         case CipherPadding::ANSI_X923:
+        {
             std::ranges::fill(pad_range, static_cast<std::byte>(0x00));
             output.back() = static_cast<std::byte>(pad_len);
             break;
+        }
         case CipherPadding::PKCS7:
+        {
             std::ranges::fill(pad_range, static_cast<std::byte>(pad_len));
             break;
+        }
         case CipherPadding::ISO_10126:
+        {
             std::mt19937_64 engine{std::random_device{}()};
             std::uniform_int_distribution<unsigned short> dist(0, 255);
             for (size_t i { 0 }; i < pad_len - 1; ++i)
@@ -54,14 +61,15 @@ constexpr void add_padding(
             }
             output.back() = static_cast<std::byte>(pad_len);
             break;
+        }
     }
 }
 
 template<size_t BlockSize = 8uz>
 constexpr std::expected<std::span<const std::byte>, PaddingError> remove_padding(
     std::span<const std::byte> block,
-    CipherPadding padding_type) noexcept
-{
+    CipherPadding padding_type
+) noexcept {
     size_t pad_len { 0 };
 
     switch(padding_type)

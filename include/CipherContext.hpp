@@ -29,49 +29,55 @@ public:
     explicit CipherContext(
         std::span<const std::byte> key,
         shared::padding::CipherPadding padding_type,
-        std::span<const std::byte> iv = {})
-        : padding_type_(padding_type)
+        std::span<const std::byte> iv = {}
+    ) : padding_type_(padding_type)
     {
         mode_.set_key(key);
         if (!iv.empty()) iv_.assign_range(iv);
     }
 
 
-    [[nodiscard]] std::future<void> process_file_async(
+    [[nodiscard]]
+    std::future<void> process_file_async(
         const std::filesystem::path& input_path,
         const std::filesystem::path& output_path,
-        CryptoOp op)
-    {
+        CryptoOp op
+    ) {
         return std::async(
             std::launch::async,
-            [this, input_path, output_path, op]
-        {
-            process_file(input_path, output_path, op);
-        });
+            [this, input_path, output_path, op]()
+            {
+                process_file(input_path, output_path, op);
+            }
+        );
     }
 
-    [[nodiscard]] std::future<size_t> async_encrypt(
+    [[nodiscard]]
+    std::future<size_t> async_encrypt(
         std::span<const std::byte> input,
-        std::span<std::byte> output)
-    {
+        std::span<std::byte> output
+    ) {
         return std::async(
             std::launch::async,
-            [this, input, output]
-        {
-            return encrypt_span(input, output);
-        });
+            [this, input, output]()
+            {
+                return encrypt_span(input, output);
+            }
+        );
     }
 
-    [[nodiscard]] std::future<size_t> async_decrypt(
+    [[nodiscard]]
+    std::future<size_t> async_decrypt(
         std::span<const std::byte> input,
-        std::span<std::byte> output)
-    {
+        std::span<std::byte> output
+    ) {
         return std::async(
             std::launch::async,
-            [this, input, output]
-        {
-            return decrypt_span(input, output);
-        });
+            [this, input, output]()
+            {
+                return decrypt_span(input, output);
+            }
+        );
     }
     
 
