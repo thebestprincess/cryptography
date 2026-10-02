@@ -357,7 +357,7 @@ TEST_F(CustomDesTest, CtrModeTest)
 
 TEST_F(CustomDesTest, RandomDeltaModeTest)
 {
-    test_mode_symmetry<shared::mode::RandomDelta<shared::Des, 13>>();
+    test_mode_symmetry<shared::mode::RandomDelta<shared::Des>>();
 }
 
 
@@ -433,7 +433,7 @@ TEST_F(CustomDealTest, CtrModeTest)
 
 TEST_F(CustomDealTest, RandomDeltaModeTest)
 {
-    test_mode_symmetry<shared::mode::RandomDelta<shared::Deal, 13>>();
+    test_mode_symmetry<shared::mode::RandomDelta<shared::Deal>>();
 }
 
 

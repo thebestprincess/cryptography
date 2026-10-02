@@ -360,16 +360,18 @@ public:
     static constexpr std::string_view string() { return "OFB"; }; 
 };
 
-template<concepts::SymmetricCipher Cipher, size_t Delta = 1>
+template<concepts::SymmetricCipher Cipher, bool isRD = false>
 class CTR final
 {
     Cipher cipher_{};
-    const size_t delta_ { Delta };
+    const size_t delta_ { 1uz };
 
 public:
-    explicit CTR(size_t delta = 1uz) : delta_(delta) {}    
-
+    explicit CTR(size_t delta = 1uz) : delta_(delta) {}
+    
     static constexpr size_t BlockSize { Cipher::BlockSize };
+    static constexpr size_t HalfBlockSize { BlockSize / 2 };
+    static_assert(BlockSize % 2 == 0, "BlockSize must be even for Random Delta");
 
     void set_key(std::span<const std::byte> key)
     {
@@ -385,19 +387,24 @@ public:
             throw std::invalid_argument("Invalid IV size");
 
         const uint64_t num_blocks { (src.size() + BlockSize - 1) / BlockSize };
-        
+
         auto indices = std::views::iota(uint64_t{0}, num_blocks);
         std::for_each(
             std::execution::par_unseq,
             indices.begin(),
-            indices.end(), 
+            indices.end(),
             [this, src, dst, iv](uint64_t index)
             {
-                uint64_t block_index { index * delta_ };
-                std::array<std::byte, BlockSize> counter { make_counter(iv, block_index) };
+                const uint64_t delta_value { index * delta_ };
+
+                std::array<std::byte, HalfBlockSize> delta_bytes {};
+                if (isRD) std::ranges::copy(iv.last(HalfBlockSize), delta_bytes.begin());
+                else delta_bytes = make_delta(delta_value);
+
+                std::array<std::byte, BlockSize> counter { make_counter(iv, delta_bytes) };
 
                 std::array<std::byte, BlockSize> encrypted_counter{};
-                cipher_.encrypt(counter,  encrypted_counter);
+                cipher_.encrypt(counter, encrypted_counter);
 
                 const size_t offset { index * BlockSize };
                 const size_t current_block_size { std::min<size_t>(BlockSize, src.size() - offset) };
@@ -419,32 +426,46 @@ public:
 
     static constexpr std::string_view string()
     {
-        return (Delta == 1) ? "CTR" : "RandomDelta";
+        return (!isRD) ? "CTR" : "RandomDelta";
     }
 
 private:
     [[nodiscard]]
-    std::array<std::byte, BlockSize> make_counter(
-        std::span<const std::byte> iv, 
-        uint64_t block_index
-    ) {
+    static std::array<std::byte, HalfBlockSize> make_delta(uint64_t value) noexcept
+    {
+        std::array<std::byte, HalfBlockSize> delta{};
+        for (size_t i : std::views::iota(0uz, HalfBlockSize) | std::views::reverse)
+        {
+            delta[i] = static_cast<std::byte>(value & 0xFF);
+            value >>= 8;
+        }
+        return delta;
+    }
+
+    [[nodiscard]]
+    static std::array<std::byte, BlockSize> make_counter(
+        std::span<const std::byte> iv,
+        std::span<const std::byte, HalfBlockSize> delta
+    ) noexcept {
         std::array<std::byte, BlockSize> counter;
         std::ranges::copy(iv, counter.begin());
 
-        uint64_t carry { block_index };
-        for (size_t i : std::views::iota(0uz, BlockSize) | std::views::reverse)
+        uint16_t carry = 0;
+        for (size_t i : std::views::iota(0uz, HalfBlockSize) | std::views::reverse)
         {
-            uint16_t sum = static_cast<uint8_t>(counter[i]) + (carry & 0xFF);
-            counter[i] = static_cast<std::byte>(sum & 0xFF);
-            carry = (carry >> 8) + (sum >> 8);
-            if (!carry) break;
+            const size_t ci = HalfBlockSize + i;
+            const uint16_t sum = static_cast<uint8_t>(counter[ci])
+                               + static_cast<uint8_t>(delta[i])
+                               + carry;
+            counter[ci] = static_cast<std::byte>(sum & 0xFFu);
+            carry = static_cast<uint16_t>(sum >> 8);
         }
 
         return counter;
     }
 };
 
-template<concepts::SymmetricCipher Cipher, size_t Delta>
-using RandomDelta = CTR<Cipher, Delta>;
+template<concepts::SymmetricCipher Cipher>
+using RandomDelta = CTR<Cipher, true>;
 
 } // namespace::mode

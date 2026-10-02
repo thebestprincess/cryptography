@@ -200,10 +200,10 @@ int main()
         tests::test_in_memory<mode::CTR<Des>>(master_key, iv, padding::CipherPadding::ISO_10126);
         tests::test_in_memory<mode::CTR<Des>>(master_key, iv, padding::CipherPadding::PKCS7);
         
-        tests::test_in_memory<mode::RandomDelta<Des, 7>>(master_key, iv, padding::CipherPadding::Zeros);
-        tests::test_in_memory<mode::RandomDelta<Des, 7>>(master_key, iv, padding::CipherPadding::ANSI_X923);
-        tests::test_in_memory<mode::RandomDelta<Des, 7>>(master_key, iv, padding::CipherPadding::ISO_10126);
-        tests::test_in_memory<mode::RandomDelta<Des, 7>>(master_key, iv, padding::CipherPadding::PKCS7);
+        tests::test_in_memory<mode::RandomDelta<Des>>(master_key, iv, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::RandomDelta<Des>>(master_key, iv, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::RandomDelta<Des>>(master_key, iv, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::RandomDelta<Des>>(master_key, iv, padding::CipherPadding::PKCS7);
 
 
         const auto master_key_deal { test_utils::generate_random_bytes(16) };
@@ -240,10 +240,10 @@ int main()
         tests::test_in_memory<mode::CTR<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
         tests::test_in_memory<mode::CTR<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
 
-        tests::test_in_memory<mode::RandomDelta<Deal, 7>>(master_key_deal, iv_deal, padding::CipherPadding::Zeros);
-        tests::test_in_memory<mode::RandomDelta<Deal, 7>>(master_key_deal, iv_deal, padding::CipherPadding::ANSI_X923);
-        tests::test_in_memory<mode::RandomDelta<Deal, 7>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
-        tests::test_in_memory<mode::RandomDelta<Deal, 7>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
+        tests::test_in_memory<mode::RandomDelta<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::Zeros);
+        tests::test_in_memory<mode::RandomDelta<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ANSI_X923);
+        tests::test_in_memory<mode::RandomDelta<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::ISO_10126);
+        tests::test_in_memory<mode::RandomDelta<Deal>>(master_key_deal, iv_deal, padding::CipherPadding::PKCS7);
 
 
         std::vector<std::filesystem::path> test_files {
