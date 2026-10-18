@@ -13,10 +13,10 @@ include(FetchContent)
 FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/archive/refs/tags/v1.18.0.zip
+    GIT_TAG v1.18.0
 )
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_subdirectory(source)
-add_subdirectory(tests)
+add_subdirectory(Lab1)

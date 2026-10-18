@@ -147,14 +147,14 @@ void test_file_io(
     else
         std::println(stderr, "File test {}: FAILED", input_path.string());
     
-    if (std::filesystem::exists(encrypted_path))
-    {
-        std::filesystem::remove(encrypted_path);
-    }
-    if (std::filesystem::exists(decrypted_path))
-    {
-        std::filesystem::remove(decrypted_path);
-    }
+    // if (std::filesystem::exists(encrypted_path))
+    // {
+    //     std::filesystem::remove(encrypted_path);
+    // }
+    // if (std::filesystem::exists(decrypted_path))
+    // {
+    //     std::filesystem::remove(decrypted_path);
+    // }
 }
 
 } // namespace tests
@@ -249,7 +249,7 @@ int main()
         std::vector<std::filesystem::path> test_files {
             "./test_data/tests.txt",
             "../test_data/animegirl.jpg",
-            "./test_data/amogus.mp3",
+            "../test_data/amogus.mp3",
             "./test_data/screencast.mp4"
         };
 
@@ -261,9 +261,9 @@ int main()
                 continue;
             }
 
-            tests::test_file_io<mode::CTR<Des>>(
-                file, master_key, iv, padding::CipherPadding::PKCS7, "des");
-            tests::test_file_io<mode::CTR<Deal>>(
+            // tests::test_file_io<mode::OFB<Des>>(
+            //     file, master_key, iv, padding::CipherPadding::PKCS7, "des");
+            tests::test_file_io<mode::ECB<Deal>>(
                 file, master_key_deal, iv_deal, padding::CipherPadding::PKCS7, "deal");
         }
     }

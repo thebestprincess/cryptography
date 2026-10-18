@@ -14,6 +14,7 @@
 #include <fstream>
 #include <random>
 #include <ranges>
+#include <stdexcept>
 #include <vector>
 
 namespace test::utils
@@ -136,6 +137,14 @@ TEST(BitPermutationTest, DeterministicLSB0)
     EXPECT_EQ(result[0], std::byte{0x1F});
 }
 
+TEST(BitPermutationTest, TestOutOfBoundsLSB0)
+{
+    std::array<std::byte, 1> input { std::byte{0xF1} };
+    std::array<uint8_t, 8> pbox { 100, 4, 5, 6, 7, 1, 2, 3 }; 
+    
+    std::array<std::byte, 1> result;
+    EXPECT_THROW(result = shared::permute_bits_to_array<1>(input, pbox, shared::BitOrder::LSB0), std::invalid_argument);
+}
 
 
 

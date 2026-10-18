@@ -14,7 +14,7 @@ void permute_bits_to(
     std::span<const uint8_t> p_box,
     std::span<std::byte> output,
     BitOrder order
-) noexcept;
+);
 
 
 template <size_t N>
