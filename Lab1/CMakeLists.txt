@@ -1,3 +1,5 @@
+find_package(TBB REQUIRED)
+
 add_library(des_core
     source/DES.cpp
     source/paddings.cpp
