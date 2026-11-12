@@ -20,8 +20,12 @@ auto polynomial_factorization(BigInt polynomial)
 constexpr std::uint16_t get_remainder(
     std::uint16_t dividen,
     std::uint16_t divisor
-) noexcept
-{
+) {
+    if (divisor == 0)
+    {
+        throw std::invalid_argument("Division by zero in GF(2)");
+    }
+
     auto bit_delta { std::bit_width(dividen) - std::bit_width(divisor) }; 
     while(bit_delta >= 0)
     {
@@ -75,60 +79,66 @@ constexpr auto get_all_irreducible_polynomials() noexcept
     return result;
 }
 
-class GaloisField final
+[[nodiscard]]
+constexpr auto add(
+    std::uint8_t lhs,
+    std::uint8_t rhs
+) noexcept
+    -> std::uint8_t
 {
-    std::uint16_t mod_{};
-public:
-    constexpr GaloisField(std::uint8_t mod)
+    return lhs ^ rhs;
+}
+
+[[nodiscard]]
+constexpr auto multiply(
+    std::uint8_t lhs,
+    std::uint8_t rhs,
+    std::uint8_t mod
+)
+    -> std::uint8_t
+{
+    if (!is_irreducible(mod))
     {
-        if (!is_irreducible(mod))
+        throw std::invalid_argument("Polynomial is reducible over GF(2^8)");
+    }
+    std::uint16_t mod_ = 0x100 | mod;
+
+    std::uint16_t result{};
+    for (auto i { 0u }; i < 8; ++i)
+    {
+        if ((rhs >> i) & 1u)
         {
-            throw std::invalid_argument("Polynomial is reducible over GF(2^8)");
+            result ^= static_cast<std::uint16_t>(lhs) << i;
         }
-        mod_ = 0x100 | mod;
     }
 
-    [[nodiscard]]
-    constexpr std::uint8_t multiply(
-        std::uint8_t lhs,
-        std::uint8_t rhs
-    ) const noexcept
+    return get_remainder(result, mod_);
+}
+
+[[nodiscard]]
+constexpr auto inverse(
+    std::uint8_t elem,
+    std::uint8_t mod
+)
+    -> std::uint8_t
+{
+    // In Rijndael (AES), consider the inverse of 0 to be 0.
+    if (elem == 0u || elem == 1u) return elem; 
+
+    std::uint8_t result { 1u };
+    std::uint8_t power { 254u };
+    while (power)
     {
-        std::uint16_t result{};
-        for (auto i { 0u }; i < 8; ++i)
+        if ((power & 1u) == 1)
         {
-            if ((rhs >> i) & 1u)
-            {
-                result ^= static_cast<std::uint16_t>(lhs) << i;
-            }
+            result = multiply(result, elem, mod);
         }
 
-        return get_remainder(result, mod_);
+        power >>= 1;
+        elem = multiply(elem, elem, mod);
     }
 
-    [[nodiscard]]
-    constexpr std::uint8_t inverse(
-        std::uint8_t elem
-    ) const noexcept
-    {
-        if (elem == 0u || elem == 1u) return elem; 
-
-        std::uint8_t result{ 1u };
-        std::uint8_t power { 254u };
-
-        while (power)
-        {
-            if ((power & 1u) == 1)
-            {
-                result = multiply(result, elem);
-            }
-
-            power >>= 1;
-            elem = multiply(elem, elem);
-        }
-
-        return result;
-    }
-};
+    return result;
+}
 
 } // rndl::gf

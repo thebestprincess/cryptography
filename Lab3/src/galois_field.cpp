@@ -44,11 +44,13 @@ void poly_div_mod(
         throw std::invalid_argument("Division by zero in GF(2)");
     }
     
-    const auto bit_delta { msb(dividend) - msb(divisor) };
+    auto bit_delta { msb(dividend) - msb(divisor) };
     while (dividend != 0 && bit_delta >= 0)
     {
         quotient ^= (BigInt{ 1 } << bit_delta);
         dividend ^= (divisor << bit_delta);
+
+        bit_delta = msb(dividend) - msb(divisor);
     }
 
     remainder = dividend;
@@ -71,7 +73,7 @@ auto polynomial_factorization(
     }
 
     std::vector<std::pair<BigInt, std::size_t>> factors{};
-    for (BigInt factor{ 2 }; msb(factor) * 2 <= polynomial; ++factor) 
+    for (BigInt factor { 2 }; msb(factor) * 2 <= msb(polynomial); ++factor) 
     {
         std::size_t power { 0 };
         BigInt quotient{};
