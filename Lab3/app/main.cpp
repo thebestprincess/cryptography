@@ -18,7 +18,7 @@
 #include <vector>
 
 
-namespace test_utils 
+namespace test_utils
 {
 
 [[nodiscard]]
@@ -26,7 +26,7 @@ std::vector<std::byte> generate_random_bytes(size_t size)
 {
     std::mt19937_64 engine{std::random_device{}()};
     std::uniform_int_distribution<unsigned short> dist(0, 255);
-    
+
     std::vector<std::byte> buffer(size);
     for (auto& b : buffer)
     {
@@ -37,7 +37,7 @@ std::vector<std::byte> generate_random_bytes(size_t size)
 
 [[nodiscard]]
 bool compare_files(
-    const std::filesystem::path& file1, 
+    const std::filesystem::path& file1,
     const std::filesystem::path& file2
 ) {
     std::ifstream f1(file1, std::ios::binary);
@@ -46,8 +46,8 @@ bool compare_files(
     if (!f1 || !f2) return false;
 
     const size_t buffer_size { constants::BUFFER_SIZE };
-    std::vector<std::byte> buff1(buffer_size); 
-    std::vector<std::byte> buff2(buffer_size); 
+    std::vector<std::byte> buff1(buffer_size);
+    std::vector<std::byte> buff2(buffer_size);
 
     while (f1 && f2)
     {
@@ -64,7 +64,7 @@ bool compare_files(
     }
 
     return true;
-} 
+}
 
 void print_vec(
     std::ranges::sized_range auto& vec,
@@ -83,13 +83,13 @@ void print_vec(
 } // namespace test_utils
 
 
-namespace tests 
+namespace tests
 {
 
 template<typename Mode>
 void test_in_memory(
-    std::span<const std::byte> key, 
-    std::span<const std::byte> iv, 
+    std::span<const std::byte> key,
+    std::span<const std::byte> iv,
     shared::padding::CipherPadding padding
 ) {
     auto plaintext { test_utils::generate_random_bytes(9) };
@@ -124,8 +124,8 @@ void test_in_memory(
 template<typename Mode>
 void test_file_io(
     const std::filesystem::path& input_path,
-    std::span<const std::byte> key, 
-    std::span<const std::byte> iv, 
+    std::span<const std::byte> key,
+    std::span<const std::byte> iv,
     shared::padding::CipherPadding padding,
     std::string_view cipher
 ) {
@@ -144,7 +144,7 @@ void test_file_io(
         std::println("File test {}: SUCCESS", input_path.string());
     else
         std::println(stderr, "File test {}: FAILED", input_path.string());
-    
+
     // if (std::filesystem::exists(encrypted_path))
     // {
     //     std::filesystem::remove(encrypted_path);
@@ -162,7 +162,7 @@ int main()
 {
     using namespace rndl::aes;
     using namespace shared;
-    try 
+    try
     {
         const auto master_key { test_utils::generate_random_bytes(16) };
         const auto iv { test_utils::generate_random_bytes(16) };
@@ -193,12 +193,12 @@ int main()
         tests::test_in_memory<mode::CFB<Aes<>>>(master_key, iv, padding::CipherPadding::ANSI_X923);
         tests::test_in_memory<mode::CFB<Aes<>>>(master_key, iv, padding::CipherPadding::ISO_10126);
         tests::test_in_memory<mode::CFB<Aes<>>>(master_key, iv, padding::CipherPadding::PKCS7);
-        
+
         tests::test_in_memory<mode::CTR<Aes<>>>(master_key, iv, padding::CipherPadding::Zeros);
         tests::test_in_memory<mode::CTR<Aes<>>>(master_key, iv, padding::CipherPadding::ANSI_X923);
         tests::test_in_memory<mode::CTR<Aes<>>>(master_key, iv, padding::CipherPadding::ISO_10126);
         tests::test_in_memory<mode::CTR<Aes<>>>(master_key, iv, padding::CipherPadding::PKCS7);
-        
+
         tests::test_in_memory<mode::RandomDelta<Aes<>>>(master_key, iv, padding::CipherPadding::Zeros);
         tests::test_in_memory<mode::RandomDelta<Aes<>>>(master_key, iv, padding::CipherPadding::ANSI_X923);
         tests::test_in_memory<mode::RandomDelta<Aes<>>>(master_key, iv, padding::CipherPadding::ISO_10126);
@@ -206,12 +206,12 @@ int main()
 
         std::vector<std::filesystem::path> test_files {
             "./test_data/tests.txt",
-            "../../test_data/animegirl.jpg",
+            "../test_data/animegirl.jpg",
             "../../test_data/amogus.mp3",
             "./test_data/screencast.mp4"
         };
 
-        for (const auto& file : test_files) 
+        for (const auto& file : test_files)
         {
             if (!std::filesystem::exists(file))
             {
@@ -223,7 +223,7 @@ int main()
                 file, master_key, iv, padding::CipherPadding::PKCS7, "des");
         }
     }
-    catch (const std::exception& e) 
+    catch (const std::exception& e)
     {
         std::println(stderr, "Critical error: {}", e.what());
         return 1;

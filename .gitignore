@@ -71,7 +71,8 @@ Testing/
 .clangd
 
 # VS Code
-.vscode/
+.vscode
+.zed
 
 # test data
 test_data/

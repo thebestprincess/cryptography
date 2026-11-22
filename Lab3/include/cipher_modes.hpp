@@ -33,7 +33,7 @@ public:
     }
 
     void encrypt_blocks(
-        std::span<const std::byte> src, 
+        std::span<const std::byte> src,
         std::span<std::byte> dst,
         [[maybe_unused]] std::span<const std::byte> iv = {}
     ) {
@@ -46,14 +46,14 @@ public:
 
         auto indices = std::views::iota(0uz, num_blocks);
         std::for_each(
-            std::execution::par_unseq, 
+            std::execution::par_unseq,
             indices.begin(),
-            indices.end(), 
+            indices.end(),
             [this, src, dst](size_t i)
             {
                 auto curr_src { src.subspan(i * BlockSize, BlockSize).first<BlockSize>() };
                 auto curr_dst { dst.subspan(i * BlockSize, BlockSize).first<BlockSize>() };
-            
+
                 cipher_.encrypt(curr_src,  curr_dst);
             }
         );
@@ -80,7 +80,7 @@ public:
             src_dst_blocks.end(),
             [this](auto src_dst_chunks)
             {
-                auto&& [src_chunk, dst_chunk] { src_dst_chunks }; 
+                auto&& [src_chunk, dst_chunk] { src_dst_chunks };
 
                 std::span<const std::byte, BlockSize> src_span { src_chunk.data(), BlockSize };
                 std::span<std::byte, BlockSize> dst_span { dst_chunk.data(), BlockSize };
@@ -90,7 +90,7 @@ public:
         );
     }
 
-    static constexpr std::string_view string() { return "ECB"; }; 
+    static constexpr std::string_view string() { return "ECB"; };
 };
 
 template<concepts::SymmetricCipher Cipher>
@@ -107,8 +107,8 @@ public:
     }
 
     void encrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
@@ -120,7 +120,7 @@ public:
         auto dst_blocks { dst | std::views::chunk(BlockSize) };
 
         std::span<const std::byte> prev_ct { iv };
-        
+
         for (auto&& [src_chunk, dst_chunk] : std::views::zip(src_blocks, dst_blocks))
         {
             std::span<const std::byte, BlockSize> src_span { src_chunk.data(), BlockSize };
@@ -134,8 +134,8 @@ public:
     }
 
     void decrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
@@ -147,16 +147,16 @@ public:
 
         auto indices = std::views::iota(0uz, num_blocks);
         std::for_each(
-            std::execution::par_unseq, 
+            std::execution::par_unseq,
             indices.begin(),
-            indices.end(), 
+            indices.end(),
             [this, src, dst, iv](size_t i)
             {
                 std::span<const std::byte, BlockSize> prev_cipher_text { (i == 0) ? iv : src.subspan((i - 1) * BlockSize, BlockSize).first<BlockSize>() };
 
                 auto curr_src { src.subspan(i * BlockSize, BlockSize).first<BlockSize>() };
                 auto curr_dst { dst.subspan(i * BlockSize, BlockSize).first<BlockSize>() };
-            
+
                 cipher_.decrypt(curr_src, curr_dst);
 
                 std::ranges::transform(curr_dst, prev_cipher_text, curr_dst.begin(), std::bit_xor<>{});
@@ -164,7 +164,7 @@ public:
         );
     }
 
-    static constexpr std::string_view string() { return "CBC"; }; 
+    static constexpr std::string_view string() { return "CBC"; };
 };
 
 template<concepts::SymmetricCipher Cipher>
@@ -181,8 +181,8 @@ public:
     }
 
     void encrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
@@ -207,24 +207,24 @@ public:
 
             std::ranges::transform(prev_xor_span, curr_plaintext, dst_span.begin(), std::bit_xor<>());
             cipher_.encrypt(dst_span, dst_span);
-            
+
             std::ranges::transform(dst_span, curr_plaintext, prev_xor_span.begin(), std::bit_xor<>());
         }
     }
 
     void decrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         if (src.size() % BlockSize != 0 || dst.size() < src.size())
             throw std::invalid_argument("Size must be a multiple of BlockSize and dst must be large enough");
         if (iv.size() != BlockSize)
             throw std::invalid_argument("Invalid IV size");
-        
+
         const auto src_blocks { src | std::views::chunk(BlockSize) };
         const auto dst_blocks { dst | std::views::chunk(BlockSize) };
-    
+
         std::array<std::byte, BlockSize> prev_xor{};
         std::ranges::copy(iv, prev_xor.begin());
         std::span prev_xor_span { prev_xor };
@@ -237,10 +237,10 @@ public:
             cipher_.decrypt(src_span, dst_span);
             std::ranges::transform(dst_span, prev_xor_span, dst_span.begin(), std::bit_xor<>());
             std::ranges::transform(dst_span, src_span, prev_xor_span.begin(), std::bit_xor<>());
-        }    
+        }
     }
 
-    static constexpr std::string_view string() { return "PCBC"; }; 
+    static constexpr std::string_view string() { return "PCBC"; };
 };
 
 template<concepts::SymmetricCipher Cipher>
@@ -257,8 +257,8 @@ public:
     }
 
     void encrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         if (iv.size() != BlockSize)
@@ -266,7 +266,7 @@ public:
 
         const auto src_blocks { src | std::views::chunk(BlockSize) };
         auto dst_blocks { dst | std::views::chunk(BlockSize) };
-    
+
         std::array<std::byte, BlockSize> prev_ct{};
         std::ranges::copy(iv, prev_ct.begin());
         std::span prev_cipher_text{ prev_ct };
@@ -280,8 +280,8 @@ public:
     }
 
     void decrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         if (iv.size() != BlockSize)
@@ -291,9 +291,9 @@ public:
 
         auto indices = std::views::iota(0uz, num_blocks);
         std::for_each(
-            std::execution::par_unseq, 
+            std::execution::par_unseq,
             indices.begin(),
-            indices.end(), 
+            indices.end(),
             [this, src, dst, iv](size_t i)
             {
                 std::span<const std::byte, BlockSize> prev_ct { (i == 0) ? iv : src.subspan((i - 1) * BlockSize, BlockSize).first<BlockSize>() };
@@ -310,7 +310,7 @@ public:
         );
     }
 
-    static constexpr std::string_view string() { return "CFB"; }; 
+    static constexpr std::string_view string() { return "CFB"; };
 };
 
 template<concepts::SymmetricCipher Cipher>
@@ -327,8 +327,8 @@ public:
     }
 
     void encrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         if (iv.size() != BlockSize)
@@ -336,7 +336,7 @@ public:
 
         const auto src_blocks { src | std::views::chunk(BlockSize) };
         auto dst_blocks { dst | std::views::chunk(BlockSize) };
-    
+
         std::array<std::byte, BlockSize> prev_iv{};
         std::ranges::copy(iv, prev_iv.begin());
         std::span prev_iv_span { prev_iv };
@@ -349,14 +349,14 @@ public:
     }
 
     void decrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         encrypt_blocks(src, dst, iv);
     }
 
-    static constexpr std::string_view string() { return "OFB"; }; 
+    static constexpr std::string_view string() { return "OFB"; };
 };
 
 template<concepts::SymmetricCipher Cipher, bool isRD = false>
@@ -367,7 +367,7 @@ class CTR final
 
 public:
     explicit CTR(size_t delta = 1uz) : delta_(delta) {}
-    
+
     static constexpr size_t BlockSize { Cipher::BlockSize };
     static constexpr size_t HalfBlockSize { BlockSize / 2 };
     static_assert(BlockSize % 2 == 0, "BlockSize must be even for Random Delta");
@@ -378,8 +378,8 @@ public:
     }
 
     void encrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         if (iv.size() != BlockSize)
@@ -409,15 +409,15 @@ public:
                 const size_t current_block_size { std::min<size_t>(BlockSize, src.size() - offset) };
                 auto curr_src { src.subspan(offset, current_block_size) };
                 auto curr_dst { dst.subspan(offset, current_block_size) };
-                
+
                 std::ranges::transform(curr_src, encrypted_counter, curr_dst.begin(), std::bit_xor<>());
             }
         );
     }
 
     void decrypt_blocks(
-        std::span<const std::byte> src, 
-        std::span<std::byte> dst, 
+        std::span<const std::byte> src,
+        std::span<std::byte> dst,
         std::span<const std::byte> iv
     ) {
         encrypt_blocks(src, dst, iv);
